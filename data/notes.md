@@ -135,3 +135,92 @@ When implementing zero-shot prompting in AgentCLI:
 3. Include explicit constraints to prevent hallucination or invention of data
 4. Balance between specificity (for accuracy) and generality (for flexibility)
 5. Consider the model's inherent capabilities and limitations when designing prompts
+
+# One-Shot Prompting for AgentCLI
+
+## What is One-Shot Prompting?
+
+One-shot prompting is a technique where an AI model is provided with a single example of the desired task before being asked to perform a similar task. This approach bridges the gap between zero-shot prompting (no examples) and few-shot prompting (multiple examples). One-shot prompting is particularly effective when:
+
+1. You need to demonstrate a specific format or approach
+2. The task has nuances that are difficult to explain but easy to demonstrate
+3. You want to guide the model's response style without extensive examples
+4. You need to balance efficiency with performance improvement
+
+## One-Shot Prompt for Document Summarization
+
+```
+I'll show you how to summarize a document effectively with one example, then I'd like you to apply the same approach to a new document.
+
+Example Document:
+"The quarterly financial report indicates a 12% increase in revenue compared to the previous quarter. Operating expenses remained stable at approximately $2.3 million. The R&D department exceeded their budget by 5%, but this was offset by lower-than-expected marketing costs. The board has approved a new investment initiative for the upcoming fiscal year."
+
+Example Summary:
+- Revenue: 12% increase from previous quarter
+- Operating expenses: Stable at $2.3M
+- Budget variances: R&D exceeded by 5%, offset by lower marketing costs
+- Future plans: New investment initiative approved for next fiscal year
+
+Now, please summarize the following document using the same approach:
+
+[DOCUMENT CONTENT]
+
+Focus on key metrics, financial data, notable variances, and future plans. Present your summary in a bulleted list format similar to the example.
+```
+
+## One-Shot Prompt for Document Question Answering
+
+```
+I'll demonstrate how to answer a question based on document content with one example, then I'd like you to answer a new question using the same approach.
+
+Example Document:
+"The project timeline has been adjusted due to supply chain delays. The initial phase will now begin on March 15th instead of February 1st. All subsequent milestones have been shifted accordingly, with the final delivery now expected by November 30th. The budget remains unchanged despite these delays."
+
+Example Question: When will the project be completed?
+Example Answer: According to the document, the final delivery is now expected by November 30th due to supply chain delays that have shifted all project milestones.
+
+New Document:
+[DOCUMENT CONTENT]
+
+Question: {specific_question}
+
+Please answer the question based solely on the information provided in the document. Follow the example format by providing a direct answer that references the relevant information from the document.
+```
+
+## One-Shot Prompt for Action Item Extraction
+
+```
+I'll show you how to extract action items from a document with one example, then I'd like you to extract action items from a new document using the same approach.
+
+Example Document:
+"During the meeting, Sarah agreed to finalize the presentation by Thursday. John will coordinate with the IT department to ensure the conference room is properly equipped. The team needs to review the proposal before next Monday's client meeting. Alex mentioned he would distribute the updated market analysis once it's completed, likely by mid-week."
+
+Example Action Items Extracted:
+1. [Sarah] Finalize the presentation by Thursday
+2. [John] Coordinate with IT department for conference room equipment
+3. [Team] Review the proposal before Monday's client meeting
+4. [Alex] Distribute updated market analysis by mid-week
+
+New Document:
+[DOCUMENT CONTENT]
+
+Please extract all action items from this document following the format shown in the example. For each action item, include the responsible party in brackets, the specific action, and any mentioned deadline.
+```
+
+## Benefits of One-Shot Prompting for AgentCLI
+
+1. **Improved Accuracy**: Provides a clear example of the expected output format and style
+2. **Reduced Ambiguity**: Demonstrates exactly what kind of information to focus on
+3. **Efficiency Balance**: More effective than zero-shot without the overhead of multiple examples
+4. **Format Consistency**: Ensures responses follow a specific structure
+5. **Learning Acceleration**: Helps the model quickly understand task-specific nuances
+
+## Implementation Considerations
+
+When implementing one-shot prompting in AgentCLI:
+
+1. Choose representative examples that clearly demonstrate the desired behavior
+2. Ensure the example is simple enough to be understood but complex enough to showcase the task
+3. Match the example domain to the target domain when possible
+4. Explicitly state how the example should guide the approach to the new task
+5. Consider creating domain-specific examples for different document types
