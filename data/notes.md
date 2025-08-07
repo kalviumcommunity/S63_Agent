@@ -224,3 +224,150 @@ When implementing one-shot prompting in AgentCLI:
 3. Match the example domain to the target domain when possible
 4. Explicitly state how the example should guide the approach to the new task
 5. Consider creating domain-specific examples for different document types
+
+# Multi-Shot Prompting for AgentCLI
+
+## What is Multi-Shot Prompting?
+
+Multi-shot prompting (also known as few-shot prompting) is a technique where an AI model is provided with multiple examples of a task before being asked to perform a similar task. By showing several examples with different variations, the model can better understand patterns, edge cases, and nuances of the desired behavior. Multi-shot prompting is particularly effective when:
+
+1. The task is complex or has multiple variations that need to be demonstrated
+2. You need to show how to handle different scenarios or edge cases
+3. The format or approach needs to be reinforced through repetition
+4. You want to maximize accuracy and consistency for critical tasks
+5. The task requires understanding subtle patterns that are best illustrated through multiple examples
+
+## Multi-Shot Prompt for Document Classification
+
+```
+I'll show you how to classify documents into categories with multiple examples, then I'd like you to classify a new document using the same approach.
+
+Example 1:
+Document: "The quarterly earnings report shows a 15% increase in revenue and a 12% increase in profit margins. The board has approved a dividend payment of $0.45 per share to be distributed next month."
+Classification: Financial Report
+Reasoning: Contains financial metrics (revenue, profit margins), mentions earnings and dividend payments, and has a formal reporting tone.
+
+Example 2:
+Document: "Team, please review the attached product specifications before our meeting on Thursday. We need to finalize the feature list and address any technical concerns before moving to the development phase."
+Classification: Internal Communication
+Reasoning: Addressed to a team, contains action items, mentions a meeting, and discusses an internal project process.
+
+Example 3:
+Document: "The new privacy policy will take effect on June 1st. Users will need to accept the updated terms to continue using the service. Key changes include enhanced data protection measures and more transparent data usage reporting."
+Classification: Policy Document
+Reasoning: Announces policy changes, mentions terms and conditions, specifies an effective date, and outlines regulatory or compliance information.
+
+Now, please classify the following document:
+
+[DOCUMENT CONTENT]
+
+Provide your classification along with reasoning that explains the key indicators that led to your classification decision.
+```
+
+## Multi-Shot Prompt for Sentiment Analysis
+
+```
+I'll demonstrate how to analyze the sentiment of document passages with multiple examples, then I'd like you to analyze a new document using the same approach.
+
+Example 1:
+Passage: "We're extremely pleased with the new system implementation. Response times have improved by 40%, and user feedback has been overwhelmingly positive. This represents a significant achievement for our team."
+Sentiment: Strongly Positive
+Key Indicators: "extremely pleased," "improved," "overwhelmingly positive," "significant achievement"
+
+Example 2:
+Passage: "The project was completed on schedule, though we encountered some minor challenges with the third-party integration. Overall, the system meets the requirements, but there are a few areas that could be enhanced in future updates."
+Sentiment: Neutral to Slightly Positive
+Key Indicators: "completed on schedule" (positive), "minor challenges" (negative), "meets requirements" (positive), "could be enhanced" (slightly negative)
+
+Example 3:
+Passage: "Unfortunately, the latest update has caused significant performance issues. Users are reporting frequent crashes, and response times have increased by 25%. We need to address these critical problems immediately before they impact customer retention."
+Sentiment: Strongly Negative
+Key Indicators: "unfortunately," "significant performance issues," "frequent crashes," "critical problems"
+
+Example 4:
+Passage: "The new feature has received mixed feedback. Some users appreciate the added functionality, while others find it confusing and unnecessary. We should consider making it optional in the next release."
+Sentiment: Mixed
+Key Indicators: "mixed feedback," both "appreciate" (positive) and "confusing and unnecessary" (negative)
+
+Now, analyze the sentiment of the following document:
+
+[DOCUMENT CONTENT]
+
+Provide your sentiment analysis along with the key indicators that informed your assessment. Be sure to consider the overall tone, specific word choices, and context.
+```
+
+## Multi-Shot Prompt for Data Extraction with Varying Formats
+
+```
+I'll show you how to extract structured information from documents with varying formats through multiple examples, then I'd like you to extract information from a new document.
+
+Example 1 (Formal Report):
+Document: "Project Status Report: As of March 15, 2023, the database migration is 75% complete. The project manager, Sarah Johnson, estimates completion by April 10, 2023. Current budget spent: $45,000 of allocated $60,000."
+
+Extracted Information:
+- Project: Database migration
+- Status: 75% complete
+- Responsible Person: Sarah Johnson (Project Manager)
+- Expected Completion: April 10, 2023
+- Budget: $45,000 spent of $60,000 allocated
+
+Example 2 (Email):
+Document: "Subject: Conference Room Booking
+Hi team, I've reserved Conference Room A for our client meeting with Acme Corp. The meeting is scheduled for Tuesday, May 5th from 2:00 PM to 4:00 PM. Please prepare your presentations by Monday. Contact me (john.smith@company.com) if you have any conflicts.
+Regards, John"
+
+Extracted Information:
+- Event: Client meeting with Acme Corp
+- Location: Conference Room A
+- Date: Tuesday, May 5th
+- Time: 2:00 PM to 4:00 PM
+- Preparation Deadline: Monday, May 4th
+- Contact: john.smith@company.com
+
+Example 3 (Meeting Minutes):
+Document: "Marketing Strategy Meeting - Minutes
+Date: June 12, 2023
+Attendees: Mark Wilson, Lisa Chen, Robert Garcia, Emma Davis
+Key Decisions:
+1. Increase social media budget by 20% for Q3
+2. Launch new product campaign on July 15
+3. Hire two additional content creators by end of month
+Next meeting: June 26, 2023"
+
+Extracted Information:
+- Meeting Type: Marketing Strategy
+- Date Held: June 12, 2023
+- Participants: Mark Wilson, Lisa Chen, Robert Garcia, Emma Davis
+- Decisions Made:
+  * Increase social media budget by 20% for Q3
+  * Launch new product campaign on July 15
+  * Hire two additional content creators by end of month
+- Follow-up Meeting: June 26, 2023
+
+Now, please extract structured information from the following document:
+
+[DOCUMENT CONTENT]
+
+Identify the document type first, then extract all relevant information in a structured format similar to the examples. Adapt your extraction approach based on the document's format and content type.
+```
+
+## Benefits of Multi-Shot Prompting for AgentCLI
+
+1. **Enhanced Accuracy**: Multiple examples help the model understand complex patterns and variations
+2. **Robust Handling of Edge Cases**: Examples can demonstrate how to handle unusual or challenging scenarios
+3. **Improved Consistency**: Reinforces the expected format and approach through repetition
+4. **Better Pattern Recognition**: Helps the model identify subtle patterns across different examples
+5. **Reduced Hallucination**: Multiple examples provide stronger guardrails against making up information
+6. **Adaptability**: Demonstrates how to handle different document formats and structures
+
+## Implementation Considerations
+
+When implementing multi-shot prompting in AgentCLI:
+
+1. **Balance Quantity and Quality**: Include enough examples to demonstrate patterns without making the prompt too long
+2. **Showcase Diversity**: Select examples that demonstrate different aspects of the task or different types of inputs
+3. **Order Strategically**: Consider placing simpler examples first, followed by more complex ones
+4. **Explain Reasoning**: When possible, include the reasoning behind each example to make the pattern more explicit
+5. **Match Complexity**: Ensure the examples are of similar complexity to the actual tasks the agent will perform
+6. **Consider Token Limits**: Be mindful of the model's context window and optimize examples for efficiency
+7. **Domain Relevance**: Use examples from the same domain or industry as the target documents
