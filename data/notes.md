@@ -371,3 +371,100 @@ When implementing multi-shot prompting in AgentCLI:
 5. **Match Complexity**: Ensure the examples are of similar complexity to the actual tasks the agent will perform
 6. **Consider Token Limits**: Be mindful of the model's context window and optimize examples for efficiency
 7. **Domain Relevance**: Use examples from the same domain or industry as the target documents
+
+# Chain of Thought Prompting for AgentCLI
+
+## What is Chain of Thought Prompting?
+
+Chain of Thought (CoT) prompting is a technique that encourages an AI model to break down complex reasoning tasks into a series of intermediate steps before arriving at a final answer. Rather than producing an immediate response, the model is prompted to "think aloud" and show its reasoning process step by step. This approach significantly improves performance on tasks requiring multi-step reasoning, logical deduction, mathematical problem-solving, or complex analysis.
+
+Chain of Thought prompting is particularly effective when:
+
+1. The task requires complex reasoning or problem-solving
+2. Multiple steps are needed to reach a conclusion
+3. Transparency in the decision-making process is important
+4. The problem benefits from structured, sequential thinking
+5. Verification of the reasoning process is as important as the final answer
+
+## Chain of Thought Prompt for Document Analysis
+
+```
+I need you to analyze the following document and identify potential issues, inconsistencies, or areas of improvement. Please think through your analysis step by step, showing your reasoning process before providing your final conclusions.
+
+[DOCUMENT CONTENT]
+
+Please follow these steps in your analysis:
+
+1. First, identify the main purpose and key components of the document
+2. Next, examine the structure and organization of the content
+3. Then, analyze the clarity and completeness of the information presented
+4. Check for any logical inconsistencies or contradictions
+5. Evaluate the document against best practices for this type of content
+6. Finally, summarize your findings and provide specific recommendations for improvement
+
+For each step, explain your thought process and observations before moving to the next step. This will help me understand how you arrived at your conclusions.
+```
+
+## Chain of Thought Prompt for Troubleshooting Technical Issues
+
+```
+I need you to help troubleshoot a technical issue described in the following document. Please think through the problem step by step, showing your reasoning process as you identify potential causes and solutions.
+
+[DOCUMENT CONTENT]
+
+Please follow these steps in your troubleshooting process:
+
+1. First, identify the specific symptoms and behaviors described in the document
+2. Next, list possible causes that could explain these symptoms
+3. For each potential cause, evaluate its likelihood based on the information provided
+4. Determine what additional information would be helpful to confirm or rule out each cause
+5. Suggest diagnostic steps to gather this information, in order of priority
+6. Based on the most likely causes, recommend specific solutions to try
+7. Finally, suggest preventive measures to avoid similar issues in the future
+
+For each step, explain your thought process before moving to the next step. This will help me understand your troubleshooting methodology and learn from your approach.
+```
+
+## Chain of Thought Prompt for Decision Analysis
+
+```
+I need you to analyze a decision scenario described in the following document. Please think through the decision-making process step by step, showing your reasoning as you evaluate options and arrive at a recommendation.
+
+[DOCUMENT CONTENT]
+
+Please follow these steps in your decision analysis:
+
+1. First, clearly define the decision that needs to be made and its context
+2. Identify all stakeholders who would be affected by this decision
+3. List all available options or alternatives mentioned in the document
+4. For each option, analyze its potential benefits, drawbacks, and risks
+5. Consider both short-term and long-term implications of each option
+6. Evaluate how each option aligns with stated goals or constraints
+7. Compare the options based on your analysis
+8. Recommend the best course of action with justification
+9. Suggest how to mitigate any risks associated with your recommended option
+
+For each step, explain your thought process before moving to the next step. This will make your reasoning transparent and help me understand how you arrived at your recommendation.
+```
+
+## Benefits of Chain of Thought Prompting for AgentCLI
+
+1. **Enhanced Problem-Solving**: Enables the agent to tackle complex reasoning tasks by breaking them down into manageable steps
+2. **Transparency**: Makes the agent's reasoning process visible and auditable, building user trust
+3. **Error Detection**: Allows users to identify where reasoning might have gone wrong in the chain
+4. **Educational Value**: Helps users learn problem-solving approaches by observing the agent's step-by-step process
+5. **Improved Accuracy**: Reduces errors by encouraging methodical thinking rather than jumping to conclusions
+6. **Better Handling of Ambiguity**: Provides space to consider multiple interpretations or approaches
+7. **Self-Correction**: Enables the agent to catch and correct its own mistakes during the reasoning process
+
+## Implementation Considerations
+
+When implementing Chain of Thought prompting in AgentCLI:
+
+1. **Balance Verbosity and Conciseness**: Ensure the reasoning steps are detailed enough to be useful but not overwhelming
+2. **Structure the Reasoning Process**: Provide clear guidance on the expected steps or framework for thinking
+3. **Domain-Specific Reasoning**: Adapt the reasoning structure to match the domain (technical troubleshooting vs. document analysis)
+4. **Allow for Iteration**: Enable the agent to revise earlier steps if later reasoning reveals flaws
+5. **Combine with Other Techniques**: Chain of Thought can be enhanced by combining with zero-shot, one-shot, or multi-shot approaches
+6. **Consider Output Format**: Determine whether to present the full reasoning chain or just highlight key steps
+7. **Manage Token Usage**: Be mindful that Chain of Thought responses use more tokens than direct answers
