@@ -372,6 +372,72 @@ When implementing multi-shot prompting in AgentCLI:
 6. **Consider Token Limits**: Be mindful of the model's context window and optimize examples for efficiency
 7. **Domain Relevance**: Use examples from the same domain or industry as the target documents
 
+# Dynamic Prompting for AgentCLI
+
+## What is Dynamic Prompting?
+
+Dynamic prompting is a technique where the content of the prompt is dynamically generated based on the context, user input, or external data. This approach allows the AI model to adapt its behavior and responses to specific scenarios, making it highly flexible and context-aware. Dynamic prompting is particularly effective when:
+
+1. The task requires real-time adaptation to user input or changing contexts
+2. The prompt needs to incorporate external data or system states
+3. The task involves multiple stages or iterative interactions
+4. Scalability and efficiency are critical for handling diverse user needs
+
+## Dynamic Prompt for Context-Aware Document Analysis
+
+```
+Based on the following user query and document content, dynamically generate a prompt to guide the AI in analyzing the document:
+
+User Query: "What are the key risks mentioned in this report?"
+Document Content: [DOCUMENT CONTENT]
+
+Dynamic Prompt:
+"Please analyze the document and identify all key risks mentioned. Focus on risks related to financial performance, operational challenges, and external factors. Provide a summary of each risk along with its potential impact."
+```
+
+## Dynamic Prompt for Real-Time Data Extraction
+
+```
+Based on the following user query and real-time data, dynamically generate a prompt to guide the AI in extracting relevant information:
+
+User Query: "Extract all upcoming deadlines from the project tracker."
+Real-Time Data: [PROJECT TRACKER DATA]
+
+Dynamic Prompt:
+"Please extract all upcoming deadlines from the provided project tracker data. For each deadline, include the task name, responsible person, and due date. Present the information in a tabular format."
+```
+
+## Dynamic Prompt for Iterative Question Answering
+
+```
+Based on the following user query and previous AI responses, dynamically generate a prompt to guide the AI in answering follow-up questions:
+
+User Query: "Can you provide more details about the marketing strategy?"
+Previous AI Response: "The marketing strategy focuses on increasing social media engagement and launching a new product campaign."
+
+Dynamic Prompt:
+"Please provide additional details about the marketing strategy mentioned earlier. Include specific tactics for increasing social media engagement and key milestones for the new product campaign."
+```
+
+## Benefits of Dynamic Prompting for AgentCLI
+
+1. **Flexibility**: Adapts to diverse user needs and contexts in real-time
+2. **Context Awareness**: Incorporates relevant data and user input into the prompt
+3. **Efficiency**: Reduces the need for manual prompt engineering by automating prompt generation
+4. **Scalability**: Handles a wide range of tasks and scenarios without predefined prompts
+5. **Improved User Experience**: Provides tailored responses that align with user expectations
+
+## Implementation Considerations
+
+When implementing dynamic prompting in AgentCLI:
+
+1. **Data Integration**: Ensure seamless integration with external data sources and system states
+2. **Prompt Templates**: Use flexible templates that can be dynamically populated with context-specific information
+3. **Real-Time Processing**: Optimize for low-latency prompt generation to maintain responsiveness
+4. **Error Handling**: Include fallback mechanisms for cases where dynamic data is incomplete or unavailable
+5. **Scalability**: Design the system to handle high volumes of dynamic prompt generation efficiently
+6. **User Feedback**: Incorporate user feedback to refine and improve dynamic prompting capabilities
+
 # Chain of Thought Prompting for AgentCLI
 
 ## What is Chain of Thought Prompting?
