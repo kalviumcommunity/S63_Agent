@@ -4,12 +4,13 @@ from core.model_client import MockModelClient, GeminiModelClient
 from core.token_utils import log_tokens
 
 class BaseAgent:
-    def __init__(self, client=None):
+    def __init__(self, client=None, temperature=0.7):
         # Default to GeminiModelClient (real API); pass MockModelClient() for testing
         self.client = client or GeminiModelClient()
+        self.temperature = temperature
 
     def ask(self, prompt: str):
-        resp = self.client.generate(prompt)
+        resp = self.client.generate(prompt, temperature=self.temperature)
         # central token logging
         log_tokens(resp)
         # normalize text return
@@ -20,6 +21,6 @@ class BaseAgent:
 
 if __name__ == "__main__":
     # Uses GeminiModelClient by default; pass MockModelClient() only for testing without API
-    agent = BaseAgent()
+    agent = BaseAgent(temperature=0.3)
     answer = agent.ask("Explain what tokens are in AI models.")
     print("Response:", answer)
