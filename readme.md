@@ -38,4 +38,6 @@ python agentcli.py ask FileAgent "What’s the due date for the project?" --file
 
 ## 🔧 Installation
 
-Coming soon....
+Coming soon...
+
+By Hasan 
