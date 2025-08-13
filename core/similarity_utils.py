@@ -1,5 +1,3 @@
-
-
 import math
 from typing import List
 
@@ -20,6 +18,19 @@ def cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
 
     return dot_product / (norm1 * norm2)
 
+def l2_distance(vec1: List[float], vec2: List[float]) -> float:
+    """
+    Compute the Euclidean (L2) distance between two vectors.
+    Formula: sqrt(sum((a - b)^2 for a, b in zip(vec1, vec2)))
+    Returns a non-negative value where 0 means identical vectors.
+    """
+    if not vec1 or not vec2:
+        raise ValueError("Vectors must be non-empty")
+    if len(vec1) != len(vec2):
+        raise ValueError("Vectors must be of same length")
+
+    return math.sqrt(sum((a - b) ** 2 for a, b in zip(vec1, vec2)))
+
 
 if __name__ == "__main__":
     v1 = [1, 0, 0]
@@ -28,3 +39,5 @@ if __name__ == "__main__":
 
     print("cos(v1, v2) =", cosine_similarity(v1, v2))  # Expect 1.0
     print("cos(v1, v3) =", cosine_similarity(v1, v3))  # Expect 0.0
+    print("l2(v1, v2) =", l2_distance(v1, v2))  # Expect 0.0
+    print("l2(v1, v3) =", l2_distance(v1, v3))  # Expect sqrt(2)

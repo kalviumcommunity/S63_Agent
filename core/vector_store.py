@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Tuple
 import math
-from core.similarity_utils import cosine_similarity
+from core.similarity_utils import cosine_similarity, l2_distance
 
 class BaseVectorStore:
     def upsert_embeddings(
@@ -65,6 +65,7 @@ class InMemoryVectorStore(BaseVectorStore):
         self,
         query_embedding: List[float],
         k: int = 5,
+        metric: str = "cosine",
     ) -> List[Tuple[float, Dict[str, Any]]]:
         if not self._records:
             return []
@@ -73,7 +74,12 @@ class InMemoryVectorStore(BaseVectorStore):
         results: List[Tuple[float, Dict[str, Any]]] = []
         for rec in self._records:
             v = rec["vector"]
-            score = cosine_similarity(q, v)
+            if metric == "cosine":
+                score = cosine_similarity(q, v)
+            elif metric == "l2":
+                score = -l2_distance(q, v)  # smaller distance = higher similarity
+            else:
+                raise ValueError(f"Unknown metric: {metric}")
             payload = {"text": rec["text"], "metadata": rec["metadata"]}
             results.append((float(score), payload))
 
