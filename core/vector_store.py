@@ -1,7 +1,6 @@
-
-
 from typing import Any, Dict, List, Optional, Tuple
 import math
+from core.similarity_utils import cosine_similarity
 
 class BaseVectorStore:
     def upsert_embeddings(
@@ -74,7 +73,7 @@ class InMemoryVectorStore(BaseVectorStore):
         results: List[Tuple[float, Dict[str, Any]]] = []
         for rec in self._records:
             v = rec["vector"]
-            score = sum(a * b for a, b in zip(q, v))
+            score = cosine_similarity(q, v)
             payload = {"text": rec["text"], "metadata": rec["metadata"]}
             results.append((float(score), payload))
 
