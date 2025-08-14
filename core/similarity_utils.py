@@ -31,6 +31,18 @@ def l2_distance(vec1: List[float], vec2: List[float]) -> float:
 
     return math.sqrt(sum((a - b) ** 2 for a, b in zip(vec1, vec2)))
 
+def dot_product_similarity(vec1: List[float], vec2: List[float]) -> float:
+    """
+    Compute the dot product similarity between two vectors.
+    This is a simple measure of similarity based on the dot product.
+    Returns a non-negative value where higher means more similar.
+    """
+    if not vec1 or not vec2:
+        raise ValueError("Vectors must be non-empty")
+    if len(vec1) != len(vec2):
+        raise ValueError("Vectors must be of same length")
+
+    return sum(a * b for a, b in zip(vec1, vec2))
 
 if __name__ == "__main__":
     v1 = [1, 0, 0]
@@ -41,3 +53,5 @@ if __name__ == "__main__":
     print("cos(v1, v3) =", cosine_similarity(v1, v3))  # Expect 0.0
     print("l2(v1, v2) =", l2_distance(v1, v2))  # Expect 0.0
     print("l2(v1, v3) =", l2_distance(v1, v3))  # Expect sqrt(2)
+    print("dot(v1, v2)=", dot_product_similarity(v1, v2)) # Expect 1.0
+    print("dot(v1, v3)=", dot_product_similarity(v1, v3)) # Expect 0.0
