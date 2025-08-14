@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Tuple
 import math
-from core.similarity_utils import cosine_similarity, l2_distance
+from core.similarity_utils import cosine_similarity, l2_distance, dot_product_similarity
 
 class BaseVectorStore:
     def upsert_embeddings(
@@ -78,6 +78,8 @@ class InMemoryVectorStore(BaseVectorStore):
                 score = cosine_similarity(q, v)
             elif metric == "l2":
                 score = -l2_distance(q, v)  # smaller distance = higher similarity
+            elif metric == "dot":
+                score = dot_product_similarity(q, v)
             else:
                 raise ValueError(f"Unknown metric: {metric}")
             payload = {"text": rec["text"], "metadata": rec["metadata"]}
