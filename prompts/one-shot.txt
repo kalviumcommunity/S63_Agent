@@ -1,0 +1,6 @@
+Example:
+Question: What is the capital of France?
+Answer: The capital of France is Paris.
+
+Question: {user_input}
+Answer:
