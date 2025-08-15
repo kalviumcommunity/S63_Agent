@@ -61,11 +61,16 @@ class GeminiModelClient(BaseModelClient):
         function_call: Optional[Union[str, Dict[str, Any]]] = None,
         **kwargs
     ) -> Any:
+        # Create GenerationConfig with the parameters
+        generation_config = self._genai.GenerationConfig(
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
+            stop_sequences=stop if isinstance(stop, list) or stop is None else [stop]
+        )
+        
         call_args = {
-            "temperature": temperature,
-            "top_k": top_k,
-            "top_p": top_p,
-            "stop": stop
+            "generation_config": generation_config
         }
         if response_format:
             call_args["response_format"] = response_format
@@ -73,5 +78,6 @@ class GeminiModelClient(BaseModelClient):
             call_args["functions"] = functions
         if function_call:
             call_args["function_call"] = function_call
+            
         resp = self._model.generate_content(prompt, **call_args, **kwargs)
         return resp

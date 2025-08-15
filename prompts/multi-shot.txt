@@ -1,0 +1,14 @@
+Example 1:
+Question: What is the capital of France?
+Answer: The capital of France is Paris.
+
+Example 2:
+Question: What is the largest planet in our solar system?
+Answer: The largest planet in our solar system is Jupiter.
+
+Example 3:
+Question: What is the chemical symbol for gold?
+Answer: The chemical symbol for gold is Au.
+
+Question: {user_input}
+Answer:
