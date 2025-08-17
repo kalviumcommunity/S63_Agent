@@ -6,6 +6,7 @@ AgentCLI - A command-line interface for interacting with AI models
 import argparse
 import os
 import json
+import requests
 from core.model_client import GeminiModelClient
 from core.token_utils import extract_tokens_from_response, log_tokens
 
@@ -32,6 +33,70 @@ def process_prompt_with_template(prompt, mode, json_output=False):
         processed_prompt = processed_prompt + json_instruction
         
     return processed_prompt
+
+
+def get_weather_function_schema():
+    """Return the function schema for the weather API"""
+    return {
+        "name": "get_weather",
+        "description": "Get the current weather for a given city",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "city": {"type": "string", "description": "Name of the city"}
+            },
+            "required": ["city"]
+        }
+    }
+
+
+def get_weather_data(city):
+    """Get weather data from OpenWeatherMap API"""
+    # Note: In a real implementation, you would need to get an API key from https://openweathermap.org/api
+    # and set it as an environment variable OPENWEATHER_API_KEY
+    api_key = os.getenv("OPENWEATHER_API_KEY")
+    if not api_key:
+        return {"error": "OpenWeatherMap API key not found. Please set OPENWEATHER_API_KEY environment variable."}
+    
+    try:
+        url = f"http://api.openweathermap.org/data/2.5/weather"
+        params = {
+            "q": city,
+            "appid": api_key,
+            "units": "metric"  # Use Celsius for temperature
+        }
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return {"error": f"Failed to fetch weather data: {str(e)}"}
+
+
+def handle_weather_request(city, model_client, **generate_kwargs):
+    """Handle weather request by calling the weather API and merging results"""
+    # Get weather data
+    weather_data = get_weather_data(city)
+    
+    # If there was an error fetching weather data, return it
+    if "error" in weather_data:
+        return weather_data["error"]
+    
+    # Construct function schema for Gemini
+    functions = [get_weather_function_schema()]
+    function_call = {"name": "get_weather"}
+    
+    # Create a prompt that includes the weather data
+    prompt = f"What is the weather like in {city}? Here is the current weather data: {json.dumps(weather_data)}"
+    
+    # Call the model with the weather data and function schema
+    response = model_client.generate(
+        prompt,
+        functions=functions,
+        function_call=function_call,
+        **generate_kwargs
+    )
+    
+    return response
 
 
 def print_response(response, json_output=False):
@@ -61,6 +126,7 @@ def main():
     parser.add_argument("--mode", type=str, choices=["zero-shot", "one-shot", "multi-shot", "cot", "dynamic"],
                         default="zero-shot", help="Prompt engineering mode")
     parser.add_argument("--json-output", action="store_true", help="Return response in JSON format")
+    parser.add_argument("--weather", type=str, help="Get weather for a specific city")
     
     # Model control parameters
     parser.add_argument("--temperature", type=float, help="Temperature for generation (0.0 to 1.0)")
@@ -74,8 +140,39 @@ def main():
     # Initialize the model client
     model_client = GeminiModelClient()
     
+    # If weather flag is provided, handle weather request
+    if args.weather:
+        # Prepare generation parameters
+        generate_kwargs = {}
+        if args.temperature is not None:
+            generate_kwargs["temperature"] = args.temperature
+        if args.top_k is not None:
+            generate_kwargs["top_k"] = args.top_k
+        if args.top_p is not None:
+            generate_kwargs["top_p"] = args.top_p
+        if args.stop_sequence is not None:
+            generate_kwargs["stop"] = args.stop_sequence
+            
+        response = handle_weather_request(args.weather, model_client, **generate_kwargs)
+        print_response(response, args.json_output)
+        
+        # Extract and log token information if response is from model
+        if hasattr(response, 'text') or isinstance(response, dict):
+            tokens = extract_tokens_from_response(response)
+            log_tokens(response)
+            
+            # Append token info to logs/tokens.log
+            # Create logs directory if it doesn't exist
+            os.makedirs("logs", exist_ok=True)
+            
+            # Format token information
+            token_log = f"[Tokens] Prompt: {tokens['prompt_tokens']}, Completion: {tokens['completion_tokens']}, Total: {tokens['total_tokens']}\n"
+            
+            # Append to log file
+            with open("logs/tokens.log", "a") as f:
+                f.write(token_log)
     # If prompt is provided, send it to the model and print the response
-    if args.prompt:
+    elif args.prompt:
         # Process prompt with selected template
         processed_prompt = process_prompt_with_template(args.prompt, args.mode, args.json_output)
         
