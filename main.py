@@ -6,9 +6,12 @@ AgentCLI - A command-line interface for interacting with AI models
 import argparse
 import os
 import json
+import pickle
 import requests
 from core.model_client import GeminiModelClient
 from core.token_utils import extract_tokens_from_response, log_tokens
+from core.embedding_client import GeminiEmbeddingClient
+from core.vector_store import InMemoryVectorStore
 
 
 def load_prompt_template(mode):
@@ -90,13 +93,67 @@ def handle_weather_request(city, model_client, **generate_kwargs):
     
     # Call the model with the weather data and function schema
     response = model_client.generate(
-        prompt,
-        functions=functions,
-        function_call=function_call,
+        prompt, 
+        functions=functions, 
+        function_call=function_call, 
         **generate_kwargs
     )
     
     return response
+
+
+def load_vector_store():
+    """Load vector store from file or create a new one"""
+    try:
+        with open("vector_db.pkl", "rb") as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        return InMemoryVectorStore()
+
+
+def save_vector_store(vector_store):
+    """Save vector store to file"""
+    with open("vector_db.pkl", "wb") as f:
+        pickle.dump(vector_store, f)
+
+
+def handle_embed_request(text, embedding_client):
+    """Handle embedding request by creating and storing embeddings"""
+    # Load existing vector store
+    vector_store = load_vector_store()
+    
+    # Generate embedding for the text
+    response = embedding_client.embed([text])
+    embedding = response["embeddings"][0]
+    
+    # Store the embedding in the vector store
+    vector_store.upsert_embeddings([text], [embedding])
+    
+    # Save the updated vector store
+    save_vector_store(vector_store)
+    
+    # Log token usage
+    log_tokens(response)
+    
+    return f"Successfully embedded and stored text: {text}"
+
+
+def handle_search_request(query, embedding_client, metric="cosine", k=5):
+    """Handle search request by finding nearest matches"""
+    # Load vector store
+    vector_store = load_vector_store()
+    
+    # Generate embedding for the query
+    response = embedding_client.embed([query])
+    query_embedding = response["embeddings"][0]
+    
+    # Log token usage
+    log_tokens(response)
+    
+    # Perform similarity search
+    results = vector_store.similarity_search(query_embedding, k=k, metric=metric)
+    
+    return results
 
 
 def print_response(response, json_output=False):
@@ -127,6 +184,11 @@ def main():
                         default="zero-shot", help="Prompt engineering mode")
     parser.add_argument("--json-output", action="store_true", help="Return response in JSON format")
     parser.add_argument("--weather", type=str, help="Get weather for a specific city")
+    parser.add_argument("--embed", type=str, help="Create and store embeddings for text")
+    parser.add_argument("--search", type=str, help="Search for similar texts using embeddings")
+    parser.add_argument("--metric", type=str, choices=["cosine", "l2", "dot"], default="cosine",
+                        help="Similarity metric for search (cosine, l2, dot)")
+    parser.add_argument("--k", type=int, default=5, help="Number of results to return for search")
     
     # Model control parameters
     parser.add_argument("--temperature", type=float, help="Temperature for generation (0.0 to 1.0)")
@@ -140,8 +202,48 @@ def main():
     # Initialize the model client
     model_client = GeminiModelClient()
     
+    # Initialize the embedding client
+    embedding_client = GeminiEmbeddingClient()
+    
+    # If embed flag is provided, handle embedding request
+    if args.embed:
+        result = handle_embed_request(args.embed, embedding_client)
+        print(result)
+        
+        # Append token info to logs/tokens.log
+        # Create logs directory if it doesn't exist
+        os.makedirs("logs", exist_ok=True)
+        
+        # Format token information
+        token_log = f"[Tokens] Embedding operation for text: {args.embed}\n"
+        
+        # Append to log file
+        with open("logs/tokens.log", "a") as f:
+            f.write(token_log)
+    # If search flag is provided, handle search request
+    elif args.search:
+        results = handle_search_request(args.search, embedding_client, args.metric, args.k)
+        
+        # Print results
+        if results:
+            print(f"Top {len(results)} results for '{args.search}' using {args.metric} similarity:")
+            for i, (score, payload) in enumerate(results, 1):
+                print(f"{i}. Score: {score:.4f} - Text: {payload['text']}")
+        else:
+            print(f"No results found for '{args.search}'")
+        
+        # Append token info to logs/tokens.log
+        # Create logs directory if it doesn't exist
+        os.makedirs("logs", exist_ok=True)
+        
+        # Format token information
+        token_log = f"[Tokens] Search operation for query: {args.search}\n"
+        
+        # Append to log file
+        with open("logs/tokens.log", "a") as f:
+            f.write(token_log)
     # If weather flag is provided, handle weather request
-    if args.weather:
+    elif args.weather:
         # Prepare generation parameters
         generate_kwargs = {}
         if args.temperature is not None:
