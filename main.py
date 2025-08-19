@@ -8,6 +8,8 @@ import os
 import json
 import pickle
 import requests
+import csv
+import time
 from core.model_client import GeminiModelClient
 from core.token_utils import extract_tokens_from_response, log_tokens
 from core.embedding_client import GeminiEmbeddingClient
@@ -93,9 +95,9 @@ def handle_weather_request(city, model_client, **generate_kwargs):
     
     # Call the model with the weather data and function schema
     response = model_client.generate(
-        prompt, 
-        functions=functions, 
-        function_call=function_call, 
+        prompt,
+        functions=functions,
+        function_call=function_call,
         **generate_kwargs
     )
     
@@ -156,6 +158,109 @@ def handle_search_request(query, embedding_client, metric="cosine", k=5):
     return results
 
 
+def load_eval_file(file_path):
+    """Load evaluation prompts from JSON or CSV file"""
+    if file_path.endswith('.json'):
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+            # If it's a list of prompts, return as is
+            if isinstance(data, list):
+                return data
+            # If it's a dict with a prompts key, return the prompts
+            elif isinstance(data, dict) and 'prompts' in data:
+                return data['prompts']
+            # Otherwise, assume it's a single prompt
+            else:
+                return [data]
+    elif file_path.endswith('.csv'):
+        prompts = []
+        with open(file_path, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                # Assume the CSV has a 'prompt' column
+                if 'prompt' in row:
+                    prompts.append(row)
+                # If no 'prompt' column, use the first column
+                elif row:
+                    first_key = next(iter(row))
+                    prompts.append({'prompt': row[first_key]})
+        return prompts
+    else:
+        raise ValueError("Unsupported file format. Please provide a JSON or CSV file.")
+
+
+def run_evaluation(file_path, model_client, embedding_client, **generate_kwargs):
+    """Run evaluation on prompts from file and store results"""
+    # Load prompts from file
+    prompts = load_eval_file(file_path)
+    
+    # Initialize results list
+    results = []
+    
+    # Run each prompt
+    for i, prompt_data in enumerate(prompts):
+        try:
+            # Handle both string prompts and dict prompts
+            if isinstance(prompt_data, str):
+                prompt = prompt_data
+                mode = "zero-shot"
+                json_output = False
+            else:
+                prompt = prompt_data.get('prompt', '')
+                mode = prompt_data.get('mode', 'zero-shot')
+                json_output = prompt_data.get('json_output', False)
+            
+            print(f"Running evaluation {i+1}/{len(prompts)}: {prompt}")
+            
+            # Process prompt with selected template
+            processed_prompt = process_prompt_with_template(prompt, mode, json_output)
+            
+            # Generate response
+            start_time = time.time()
+            response = model_client.generate(processed_prompt, **generate_kwargs)
+            end_time = time.time()
+            
+            # Extract response text
+            response_text = response.text if hasattr(response, 'text') else str(response)
+            
+            # Extract token information
+            tokens = extract_tokens_from_response(response)
+            
+            # Create result entry
+            result = {
+                "id": i+1,
+                "input": prompt,
+                "mode": mode,
+                "output": response_text,
+                "tokens": tokens,
+                "execution_time": end_time - start_time
+            }
+            
+            results.append(result)
+            
+            # Log tokens
+            log_tokens(response)
+            
+        except Exception as e:
+            # Handle errors
+            result = {
+                "id": i+1,
+                "input": prompt if 'prompt' in locals() else str(prompt_data),
+                "mode": mode if 'mode' in locals() else "zero-shot",
+                "output": f"Error: {str(e)}",
+                "tokens": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+                "execution_time": 0
+            }
+            results.append(result)
+            print(f"Error running evaluation {i+1}: {str(e)}")
+    
+    # Save results to eval_results.json
+    with open("eval_results.json", "w") as f:
+        json.dump(results, f, indent=2)
+    
+    return results
+
+
 def print_response(response, json_output=False):
     """Print the response, parsing and pretty-printing JSON if requested"""
     response_text = response.text if hasattr(response, 'text') else str(response)
@@ -189,6 +294,7 @@ def main():
     parser.add_argument("--metric", type=str, choices=["cosine", "l2", "dot"], default="cosine",
                         help="Similarity metric for search (cosine, l2, dot)")
     parser.add_argument("--k", type=int, default=5, help="Number of results to return for search")
+    parser.add_argument("--eval", type=str, help="Run evaluation on prompts from JSON/CSV file")
     
     # Model control parameters
     parser.add_argument("--temperature", type=float, help="Temperature for generation (0.0 to 1.0)")
@@ -205,8 +311,24 @@ def main():
     # Initialize the embedding client
     embedding_client = GeminiEmbeddingClient()
     
+    # If eval flag is provided, run evaluation
+    if args.eval:
+        # Prepare generation parameters
+        generate_kwargs = {}
+        if args.temperature is not None:
+            generate_kwargs["temperature"] = args.temperature
+        if args.top_k is not None:
+            generate_kwargs["top_k"] = args.top_k
+        if args.top_p is not None:
+            generate_kwargs["top_p"] = args.top_p
+        if args.stop_sequence is not None:
+            generate_kwargs["stop"] = args.stop_sequence
+            
+        results = run_evaluation(args.eval, model_client, embedding_client, **generate_kwargs)
+        print(f"Evaluation completed. Results saved to eval_results.json")
+        print(f"Ran {len(results)} prompts with {sum(r['tokens']['total_tokens'] for r in results)} total tokens used.")
     # If embed flag is provided, handle embedding request
-    if args.embed:
+    elif args.embed:
         result = handle_embed_request(args.embed, embedding_client)
         print(result)
         
