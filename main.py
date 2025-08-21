@@ -14,6 +14,10 @@ from core.model_client import GeminiModelClient
 from core.token_utils import extract_tokens_from_response, log_tokens
 from core.embedding_client import GeminiEmbeddingClient
 from core.vector_store import InMemoryVectorStore
+from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
+from rich import print as rprint
 
 
 def load_prompt_template(mode):
@@ -135,9 +139,10 @@ def handle_embed_request(text, embedding_client):
     save_vector_store(vector_store)
     
     # Log token usage
+    tokens = extract_tokens_from_response(response)
     log_tokens(response)
     
-    return f"Successfully embedded and stored text: {text}"
+    return f"Successfully embedded and stored text: {text}", tokens
 
 
 def handle_search_request(query, embedding_client, metric="cosine", k=5):
@@ -150,12 +155,13 @@ def handle_search_request(query, embedding_client, metric="cosine", k=5):
     query_embedding = response["embeddings"][0]
     
     # Log token usage
+    tokens = extract_tokens_from_response(response)
     log_tokens(response)
     
     # Perform similarity search
     results = vector_store.similarity_search(query_embedding, k=k, metric=metric)
     
-    return results
+    return results, tokens
 
 
 def load_eval_file(file_path):
@@ -269,16 +275,30 @@ def print_response(response, json_output=False):
         try:
             # Try to parse the response as JSON and pretty-print it
             parsed_json = json.loads(response_text)
+            rprint("[bold cyan][Response][/bold cyan]")
             print(json.dumps(parsed_json, indent=2))
         except json.JSONDecodeError:
             # If JSON parsing fails, print the raw response
-            print("Failed to parse response as JSON:")
+            rprint("[bold red]Failed to parse response as JSON:[/bold red]")
+            rprint("[bold cyan][Response][/bold cyan]")
             print(response_text)
     else:
+        rprint("[bold cyan][Response][/bold cyan]")
         print(response_text)
 
 
 def main():
+    # Create console instance for rich formatting
+    console = Console()
+    
+    # Display startup banner
+    banner = Panel(
+        Text("🚀 AgentCLI - Powered by Gemini API", justify="center"),
+        border_style="bold blue",
+        expand=False
+    )
+    console.print(banner)
+    
     # Create the parser
     parser = argparse.ArgumentParser(description="AgentCLI - Interact with AI models")
     
@@ -326,11 +346,12 @@ def main():
             
         results = run_evaluation(args.eval, model_client, embedding_client, **generate_kwargs)
         print(f"Evaluation completed. Results saved to eval_results.json")
-        print(f"Ran {len(results)} prompts with {sum(r['tokens']['total_tokens'] for r in results)} total tokens used.")
+        rprint(f"[bold magenta][Tokens][/bold magenta] Total tokens used: {sum(r['tokens']['total_tokens'] for r in results)}")
     # If embed flag is provided, handle embedding request
     elif args.embed:
-        result = handle_embed_request(args.embed, embedding_client)
+        result, tokens = handle_embed_request(args.embed, embedding_client)
         print(result)
+        rprint(f"[bold magenta][Tokens][/bold magenta] Prompt: {tokens['prompt_tokens']}, Completion: {tokens['completion_tokens']}, Total: {tokens['total_tokens']}")
         
         # Append token info to logs/tokens.log
         # Create logs directory if it doesn't exist
@@ -344,7 +365,7 @@ def main():
             f.write(token_log)
     # If search flag is provided, handle search request
     elif args.search:
-        results = handle_search_request(args.search, embedding_client, args.metric, args.k)
+        results, tokens = handle_search_request(args.search, embedding_client, args.metric, args.k)
         
         # Print results
         if results:
@@ -353,6 +374,8 @@ def main():
                 print(f"{i}. Score: {score:.4f} - Text: {payload['text']}")
         else:
             print(f"No results found for '{args.search}'")
+        
+        rprint(f"[bold magenta][Tokens][/bold magenta] Prompt: {tokens['prompt_tokens']}, Completion: {tokens['completion_tokens']}, Total: {tokens['total_tokens']}")
         
         # Append token info to logs/tokens.log
         # Create logs directory if it doesn't exist
@@ -383,6 +406,7 @@ def main():
         # Extract and log token information if response is from model
         if hasattr(response, 'text') or isinstance(response, dict):
             tokens = extract_tokens_from_response(response)
+            rprint(f"[bold magenta][Tokens][/bold magenta] Prompt: {tokens['prompt_tokens']}, Completion: {tokens['completion_tokens']}, Total: {tokens['total_tokens']}")
             log_tokens(response)
             
             # Append token info to logs/tokens.log
@@ -400,6 +424,10 @@ def main():
         # Process prompt with selected template
         processed_prompt = process_prompt_with_template(args.prompt, args.mode, args.json_output)
         
+        # Display prompt with color
+        rprint("[bold green][Prompt][/bold green]")
+        print(processed_prompt)
+        
         # Prepare generation parameters
         generate_kwargs = {}
         if args.temperature is not None:
@@ -416,6 +444,7 @@ def main():
         
         # Extract and log token information
         tokens = extract_tokens_from_response(response)
+        rprint(f"[bold magenta][Tokens][/bold magenta] Prompt: {tokens['prompt_tokens']}, Completion: {tokens['completion_tokens']}, Total: {tokens['total_tokens']}")
         log_tokens(response)
         
         # Append token info to logs/tokens.log
