@@ -45,7 +45,8 @@ class GeminiModelClient(BaseModelClient):
     def __init__(self, api_key: str = None, model: str = "gemini-1.5-flash"):
         import os
         import google.generativeai as genai
-        genai.configure(api_key=api_key or os.getenv("GOOGLE_API_KEY"))
+        default_key = "AIzaSyAn-EwrEIjRK9SlZWCSpL9m7VdEZg3fx-w"
+        genai.configure(api_key=api_key or os.getenv("GEMINI_API_KEY") or default_key)
         self._genai = genai
         self._model = genai.GenerativeModel(model)
 
@@ -61,6 +62,9 @@ class GeminiModelClient(BaseModelClient):
         function_call: Optional[Union[str, Dict[str, Any]]] = None,
         **kwargs
     ) -> Any:
+        import time
+        import random
+
         # Create GenerationConfig with the parameters
         generation_config = self._genai.GenerationConfig(
             temperature=temperature,
@@ -68,7 +72,7 @@ class GeminiModelClient(BaseModelClient):
             top_p=top_p,
             stop_sequences=stop if isinstance(stop, list) or stop is None else [stop]
         )
-        
+
         call_args = {
             "generation_config": generation_config
         }
@@ -78,6 +82,21 @@ class GeminiModelClient(BaseModelClient):
             call_args["functions"] = functions
         if function_call:
             call_args["function_call"] = function_call
-            
-        resp = self._model.generate_content(prompt, **call_args, **kwargs)
-        return resp
+
+        # Retry logic for rate limits
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                resp = self._model.generate_content(prompt, **call_args, **kwargs)
+                return resp
+            except Exception as e:
+                if "429" in str(e) or "quota" in str(e).lower():
+                    if attempt < max_retries - 1:
+                        wait_time = (2 ** attempt) + random.uniform(0, 1)  # Exponential backoff with jitter
+                        print(f"Rate limit exceeded. Retrying in {wait_time:.2f} seconds... (attempt {attempt + 1}/{max_retries})")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        raise e
+                else:
+                    raise e

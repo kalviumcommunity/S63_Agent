@@ -1,8 +1,0 @@
-Question: {user_input}
-Let's think step by step to answer this question:
-
-Step 1: 
-Step 2: 
-Step 3: 
-
-Therefore, the answer is:

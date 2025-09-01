@@ -36,13 +36,14 @@ class MockEmbeddingClient(BaseEmbeddingClient):
 
 class GeminiEmbeddingClient(BaseEmbeddingClient):
     """
-    Uses Google Generative AI embeddings. Requires GOOGLE_API_KEY in env.
+    Uses Google Generative AI embeddings. Requires GEMINI_API_KEY in env.
     Default model: text-embedding-004
     """
     def __init__(self, api_key: Optional[str] = None, model: str = "text-embedding-004"):
         import os
         import google.generativeai as genai
-        genai.configure(api_key=api_key or os.getenv("GOOGLE_API_KEY"))
+        default_key = "AIzaSyAn-EwrEIjRK9SlZWCSpL9m7VdEZg3fx-w"
+        genai.configure(api_key=api_key or os.getenv("GEMINI_API_KEY") or default_key)
         self._genai = genai
         self._model = model
 

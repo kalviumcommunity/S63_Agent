@@ -48,7 +48,9 @@ if __name__ == "__main__":
             }
         }
     ]
+    # Use MockModelClient to avoid making real API calls during testing
     agent = BaseAgent(
+        client=MockModelClient(),  # Use mock client instead of real API
         temperature=0.3,
         top_k=10,
         top_p=0.8,
