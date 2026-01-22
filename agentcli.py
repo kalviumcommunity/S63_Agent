@@ -11,11 +11,15 @@ from rich.panel import Panel
 from rich.text import Text
 from rich import print as rprint
 
+# Import MockModelClient for agent client injection
+from core.model_client import MockModelClient
+
 # Import agents
 from agents.file_agent import FileAgent
 from agents.summarizer_agent import SummarizerAgent
 from agents.reminder_agent import ReminderAgent
 from agents.tutor_agent import TutorAgent
+from agents.retrieval_agent import RetrievalAgent
 
 def get_agent_class(agent_name):
     agents = {
@@ -72,13 +76,33 @@ def main():
         
         if args.command == 'run':
             if args.agent_name == 'TutorAgent':
-                agent = agent_class(file_path=args.file, level=args.level)
+                agent = agent_class(file_path=args.file, level=args.level, client=MockModelClient())
             else:
-                agent = agent_class(file_path=args.file)
+                agent = agent_class(file_path=args.file, client=MockModelClient())
             result = agent.run()
         elif args.command == 'ask':
-            agent = agent_class(file_path=args.file)
-            result = agent.ask(args.question)
+            # Initialize agent
+            agent = agent_class(file_path=args.file, client=MockModelClient())
+
+            # --- RAG step (safe fallback) ---
+            # Use plain text context only to avoid Gemini dict-format errors
+            if hasattr(agent, "content") and agent.content:
+                context = agent.content
+            else:
+                context = ""
+
+            # Augment question with retrieved context
+            final_question = f"""
+Use the following context to answer the question.
+
+Context:
+{context}
+
+Question:
+{args.question}
+"""
+
+            result = agent.ask(final_question)
         
         # Print result
         rprint("[bold cyan][Result][/bold cyan]")

@@ -42,7 +42,7 @@ class MockModelClient(BaseModelClient):
         return {"text": text, "usage": usage}
 
 class GeminiModelClient(BaseModelClient):
-    def __init__(self, api_key: str = None, model: str = "gemini-1.5-flash"):
+    def __init__(self, api_key: str = None, model: str = "models/gemini-pro-latest"):
         import os
         import google.generativeai as genai
         default_key = "AIzaSyAn-EwrEIjRK9SlZWCSpL9m7VdEZg3fx-w"

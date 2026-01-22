@@ -1,90 +1,99 @@
 # 🤖 AgentCLI – AI Agents in Your Terminal
 
-AgentCLI is a modular command-line tool that allows users to interact with powerful AI agents directly from their terminal. Built around the **Gemini API** by Google, AgentCLI enables smart interaction with local documents (like PDFs, text files, and markdown), allowing users to extract actionable insights, answer questions, and perform task-based automation — all with zero reliance on heavyweight frameworks like LangChain.
+AgentCLI is a modular command-line tool that lets you run AI agents directly from your terminal. Built around **Google’s Gemini API**, it enables document-grounded question answering, summarization, and task-based automation over local files — without relying on heavyweight frameworks like LangChain.
 
-## 🎯 Target Audience
-
-AgentCLI is designed for developers, researchers, and power users who want to harness AI agents through their terminal without the bloat of large frameworks.
+The project is designed to be lightweight, extensible, and developer-friendly, focusing on clarity and control rather than hidden abstractions.
 
 ---
 
-## 🧠 Project Idea
+## 🎯 Target Audience
 
-AgentCLI is designed as a lightweight and extensible CLI framework for **developing and running AI agents**. Each agent is built to handle a specific category of task using:
+AgentCLI is built for developers, students, and power users who want to experiment with AI agents locally, understand how they work under the hood, and integrate LLM capabilities into CLI workflows.
 
-- **Gemini’s generative capabilities for text understanding and reasoning**
-- **Custom function calls to perform real-world actions**
-- **Semantic search and retrieval over local files (RAG)**
+---
 
-## ❓ Why This Project?
+## 🧠 Project Overview
 
-In a world dominated by complex orchestration frameworks, AgentCLI brings things back to basics — empowering developers to quickly prototype and run AI agents without hidden abstraction or unnecessary bloat.
+AgentCLI is a lightweight framework for **developing and running task-specific AI agents**. Each agent is responsible for a single category of task and follows a shared interface, making the system easy to extend.
+
+Core ideas behind the project:
+
+- Direct use of **Gemini’s generative capabilities** for reasoning and text understanding  
+- **Document-grounded interaction** by injecting local file content into prompts  
+- Clear separation between agents, model clients, and the CLI layer  
+- No dependency on orchestration frameworks like LangChain  
+
+---
 
 ## 🚀 Features
 
 - Run task-specific agents directly from the terminal
-- Perform semantic search and Q&A over local files (PDF, TXT, MD)
-- Leverage function calling to automate tasks
-- Modular, plug-and-play agent design — easy to extend
-- Lightweight: no LangChain, minimal dependencies
+- Ask questions over local files (PDF, TXT, MD)
+- Summarize and analyze documents
+- Modular, plug-and-play agent architecture
+- Pluggable model backends (real API or mock client)
+- Lightweight and minimal dependencies
 
-The user runs agents using simple commands like:
+---
 
-```bash
-python agentcli.py run ReminderAgent --file report.pdf
-python agentcli.py run TutorAgent --file notes.md --level beginner
-python agentcli.py ask FileAgent "What’s the due date for the project?" --file tasks.txt
-```
+## 🏗 Architecture Overview
+
+AgentCLI follows a clean, modular architecture:
+
+- **CLI Layer** – Handles command parsing and user interaction using `argparse`
+- **Agent Layer** – Task-specific agents (FileAgent, TutorAgent, SummarizerAgent, etc.)
+- **Model Layer** – Interchangeable model clients (Gemini API or MockModelClient)
+- **Context Layer** – Injects file content into prompts for document-aware reasoning
+
+This design allows seamless switching between real LLM calls and mocked responses for testing and demos.
+
+---
+
+## 🧪 Mock vs Gemini Mode
+
+AgentCLI supports two interchangeable model backends:
+
+- **GeminiModelClient** – Uses the real Gemini API for production usage
+- **MockModelClient** – Used for local testing and demos when API quotas or rate limits are an issue
+
+Both clients implement the same interface, ensuring identical behavior across environments without changing agent logic.
+
+---
 
 ## 🔧 Installation
 
-Coming soon...
-
-By Hasan 
-# 🤖 AgentCLI – AI Agents in Your Terminal
-
-AgentCLI is a modular command-line tool that brings the power of AI agents directly to your terminal. Built around the **Gemini API** by Google, AgentCLI enables smart interaction with local documents (PDF, TXT, MD), allowing you to extract insights, answer questions, and automate tasks — all without heavyweight frameworks like LangChain.
-
----
-
-## 🚀 Features
-
-- **Run task-specific agents from the terminal**
-- **Semantic search and Q&A over local files (PDF, TXT, MD)**
-- **Function calling for task automation**
-- **Modular, plug-and-play agent design**
-- **Lightweight: no LangChain, minimal dependencies**
+```bash
+git clone https://github.com/your-username/agentcli.git
+cd agentcli
+pip install -r requirements.txt
+```
 
 ---
 
-## 📦 Installation
+## 🔑 API Setup (Gemini)
 
-> **Note:** Installation instructions coming soon!
+1. Generate an API key from Google AI Studio:  
+   https://aistudio.google.com/app/apikey
+2. Set the API key as an environment variable:
 
----
-
-## 🔑 API Setup
-
-1. Obtain your Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
-2. Set your API key as an environment variable:
-   ```bash
-   export GEMINI_API_KEY="your-key-here"
-   ```
+```bash
+export GEMINI_API_KEY="your-api-key-here"
+```
 
 ---
 
 ## 💻 Usage
 
-Run agents and ask questions using simple commands:
+Run agents and ask questions using simple CLI commands:
 
 ```bash
-# Run a reminder agent on a PDF
+# Run a reminder agent on a document
 python agentcli.py run ReminderAgent --file report.pdf
 
-# Run a tutor agent on notes
+# Run a tutor agent with difficulty level
 python agentcli.py run TutorAgent --file notes.md --level beginner
 
-# Ask a file agent a question
+# Ask questions about a file
 python agentcli.py ask FileAgent "What’s the due date for the project?" --file tasks.txt
 ```
 
@@ -92,25 +101,24 @@ python agentcli.py ask FileAgent "What’s the due date for the project?" --file
 
 ## 📄 Logs & Output
 
-- All agent interactions and results are logged to `logs/agentcli.log`.
-- Outputs are printed to the terminal and optionally saved to a file with `--output result.txt`.
+- All interactions are logged to `logs/agentcli.log`
+- Results are printed to the terminal
+- Outputs can optionally be saved using `--output result.txt`
 
 ---
 
-## 🧩 Examples
+## 🧩 Example Commands
 
-- **Extract deadlines from a PDF:**  
-  ```bash
-  python agentcli.py ask FileAgent "List all deadlines in the document" --file syllabus.pdf
-  ```
-- **Summarize a markdown file:**  
-  ```bash
-  python agentcli.py run SummarizerAgent --file notes.md
-  ```
-- **Automate reminders:**  
-  ```bash
-  python agentcli.py run ReminderAgent --file tasks.txt
-  ```
+```bash
+# Extract deadlines from a PDF
+python agentcli.py ask FileAgent "List all deadlines in the document" --file syllabus.pdf
+
+# Summarize a markdown file
+python agentcli.py run SummarizerAgent --file notes.md
+
+# Generate reminders from a task list
+python agentcli.py run ReminderAgent --file tasks.txt
+```
 
 ---
 
